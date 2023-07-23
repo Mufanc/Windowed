@@ -1,4 +1,4 @@
-import "./browser-polyfill.min.js";
+import './browser-polyfill.min.js'
 
 // @ts-ignore
-export let browser = globalThis.browser;
+export let browser = globalThis.browser

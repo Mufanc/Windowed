@@ -4,19 +4,17 @@
 // more rather than less code. No modules or anything fance like that
 
 // @ts-ignore
-const browser = /** @type {import("webextension-polyfill-ts").Browser} */ (
-  globalThis.browser
-);
+const browser = /** @type {import("webextension-polyfill-ts").Browser} */ (globalThis.browser)
 
-const fullscreen_id_namespace = `windowed_long_id_that_does_not_conflict`;
+const fullscreen_id_namespace = `windowed_long_id_that_does_not_conflict`
 
-const fullscreen_select = `${fullscreen_id_namespace}_select`;
-const fullscreen_active = `${fullscreen_id_namespace}_active`;
-const fullscreen_element_cloned = `${fullscreen_id_namespace}_ugly_hacky_cloned`;
-const fullscreen_parent = `${fullscreen_id_namespace}_parent`;
-const body_class = `${fullscreen_id_namespace}_body`;
+const fullscreen_select = `${fullscreen_id_namespace}_select`
+const fullscreen_active = `${fullscreen_id_namespace}_active`
+const fullscreen_element_cloned = `${fullscreen_id_namespace}_ugly_hacky_cloned`
+const fullscreen_parent = `${fullscreen_id_namespace}_parent`
+const body_class = `${fullscreen_id_namespace}_body`
 
-const max_z_index = "2147483647";
+const max_z_index = '2147483647'
 
 /**
  * @typedef PictureInPictureVideoElement
@@ -28,104 +26,104 @@ const max_z_index = "2147483647";
 
 // Aliasses for different browsers (rest of aliasses are in the inserted script)
 let fullscreenchange_aliasses = [
-  "fullscreenchange",
-  "webkitfullscreenchange",
-  "mozfullscreenchange",
-  "MSFullscreenChange",
-];
+    'fullscreenchange',
+    'webkitfullscreenchange',
+    'mozfullscreenchange',
+    'MSFullscreenChange',
+]
 let requestFullscreen_aliasses = [
-  "requestFullscreen",
-  "mozRequestFullScreen",
-  "webkitRequestFullscreen",
-  "webkitRequestFullScreen",
-  "msRequestFullscreen",
-];
+    'requestFullscreen',
+    'mozRequestFullScreen',
+    'webkitRequestFullscreen',
+    'webkitRequestFullScreen',
+    'msRequestFullscreen',
+]
 let exitFullscreen_aliasses = [
-  "exitFullscreen",
-  "webkitExitFullscreen",
-  "webkitCancelFullScreen",
-  "mozCancelFullScreen",
-  "msExitFullscreen",
-];
+    'exitFullscreen',
+    'webkitExitFullscreen',
+    'webkitCancelFullScreen',
+    'mozCancelFullScreen',
+    'msExitFullscreen',
+]
 let fullscreenelement_aliasses = [
-  "fullscreenElement",
-  "webkitFullscreenElement",
-  "mozFullscreenElement",
-  "mozFullScreenElement",
-  "msFullscreenElement",
-  "webkitCurrentFullScreenElement",
-];
+    'fullscreenElement',
+    'webkitFullscreenElement',
+    'mozFullscreenElement',
+    'mozFullScreenElement',
+    'msFullscreenElement',
+    'webkitCurrentFullScreenElement',
+]
 
-let external_functions = {};
-let next_id = 1;
+let external_functions = {}
+let next_id = 1
 
 let on_webpage = (strings, ...values) => {
-  let result = strings[0];
+    let result = strings[0]
 
-  let value_index = 1;
-  for (let value of values) {
-    if (typeof value === "string") {
-      result = result + value;
-    }
-    if (typeof value === "object") {
-      result = result + JSON.stringify(value);
-    }
-    if (typeof value === "function") {
-      external_functions[next_id] = value;
-      result = result + `external_function(${next_id});`;
-      next_id = next_id + 1;
-    }
-    result = result + strings[value_index];
-    value_index = value_index + 1;
-  }
-
-  return result;
-};
-
-let all_communication_id = 0;
-let external_function_parent =
-  (function_id) =>
-  async (...args) => {
-    let request_id = `FROM_CONTENT:${all_communication_id}`;
-    all_communication_id = all_communication_id + 1;
-
-    if (window.parent === window) {
-      return;
-    }
-
-    window.parent.postMessage(
-      {
-        type: "CUSTOM_WINDOWED_FROM_PAGE",
-        request_id: request_id,
-        function_id: function_id,
-        args: args,
-      },
-      "*",
-    );
-
-    return new Promise((resolve, reject) => {
-      let listener = (event) => {
-        // We only accept messages from ourselves
-        if (event.source != window.parent) return;
-        if (event.data == null) return;
-
-        if (event.data.type === "CUSTOM_WINDOWED_TO_PAGE") {
-          if (event.data.request_id === request_id) {
-            window.removeEventListener("message", listener);
-            resolve(event.data.result);
-          }
+    let value_index = 1
+    for (let value of values) {
+        if (typeof value === 'string') {
+            result = result + value
         }
-      };
-      window.addEventListener("message", listener);
-    });
-  };
+        if (typeof value === 'object') {
+            result = result + JSON.stringify(value)
+        }
+        if (typeof value === 'function') {
+            external_functions[next_id] = value
+            result = result + `external_function(${next_id});`
+            next_id = next_id + 1
+        }
+        result = result + strings[value_index]
+        value_index = value_index + 1
+    }
+
+    return result
+}
+
+let all_communication_id = 0
+let external_function_parent =
+    (function_id) =>
+    async (...args) => {
+        let request_id = `FROM_CONTENT:${all_communication_id}`
+        all_communication_id = all_communication_id + 1
+
+        if (window.parent === window) {
+            return
+        }
+
+        window.parent.postMessage(
+            {
+                type: 'CUSTOM_WINDOWED_FROM_PAGE',
+                request_id: request_id,
+                function_id: function_id,
+                args: args,
+            },
+            '*',
+        )
+
+        return new Promise((resolve, reject) => {
+            let listener = (event) => {
+                // We only accept messages from ourselves
+                if (event.source != window.parent) return
+                if (event.data == null) return
+
+                if (event.data.type === 'CUSTOM_WINDOWED_TO_PAGE') {
+                    if (event.data.request_id === request_id) {
+                        window.removeEventListener('message', listener)
+                        resolve(event.data.result)
+                    }
+                }
+            }
+            window.addEventListener('message', listener)
+        })
+    }
 
 let enable_selector = (element, key) => {
-  element.dataset[key] = true;
-};
+    element.dataset[key] = true
+}
 let disable_selector = (element, key) => {
-  delete element.dataset[key];
-};
+    delete element.dataset[key]
+}
 
 /**
  * @returns {Promise<{
@@ -134,10 +132,10 @@ let disable_selector = (element, key) => {
  * }>}
  */
 let get_host_config_local = async () => {
-  return await send_chrome_message({
-    type: "get_windowed_config",
-  });
-};
+    return await send_chrome_message({
+        type: 'get_windowed_config',
+    })
+}
 
 let Button = ({ icon, title, text, target }) => `
   <button data-target="${target}" title="${title}">
@@ -146,18 +144,14 @@ let Button = ({ icon, title, text, target }) => `
     />
     <span>${text}</span>
   </button>
-`;
+`
 
 // Insert requestFullScreen mock
 const code_to_insert_in_page = on_webpage`{
   // Alliases for different browsers
-  let requestFullscreen_aliasses = ${JSON.stringify(
-    requestFullscreen_aliasses,
-  )};
+  let requestFullscreen_aliasses = ${JSON.stringify(requestFullscreen_aliasses)};
   let exitFullscreen_aliasses = ${JSON.stringify(exitFullscreen_aliasses)};
-  let fullscreenelement_aliasses = ${JSON.stringify(
-    fullscreenelement_aliasses,
-  )};
+  let fullscreenelement_aliasses = ${JSON.stringify(fullscreenelement_aliasses)};
   let fullscreenchange_aliasses = ${JSON.stringify(fullscreenchange_aliasses)};
 
   const send_event = (element, type) => {
@@ -241,84 +235,72 @@ const code_to_insert_in_page = on_webpage`{
   }
 
   let make_tab_go_fullscreen = ${async () => {
-    await go_into_fullscreen();
+      await go_into_fullscreen()
   }}
   let make_tab_go_inwindow = ${async () => {
-    await go_in_window();
+      await go_in_window()
   }}
 
   let create_popup = ${async () => {
-    clear_popup();
+      clear_popup()
 
-    let is_fullscreen = await external_function_parent("is_fullscreen")();
-    if (is_fullscreen) {
-      await go_out_of_fullscreen();
-      return;
-    }
-
-    // Find possible picture-in-picture video element
-    let element = document.querySelector(`[data-${fullscreen_select}]`);
-    let video_element = /** @type {PictureInPictureVideoElement} */ (
-      element.querySelector("video")
-    );
-    video_element =
-      video_element != null &&
-      video_element.requestPictureInPicture != null &&
-      video_element.readyState >= 1 &&
-      !video_element.disablePictureInPicture
-        ? video_element
-        : null;
-
-    let { mode, pip } = await get_host_config_local();
-    if (pip === true && video_element != null) {
-      video_element.requestPictureInPicture();
-      onEscapePress(() => {
-        // @ts-ignore
-        document.exitPictureInPicture();
-      });
-      return "PICTURE-IN-PICTURE";
-    }
-
-    if (mode === "fullscreen" || mode === "windowed" || mode === "in-window") {
-      if (mode === "fullscreen") {
-        let element = document.querySelector(`[data-${fullscreen_select}]`);
-        disable_selector(element, fullscreen_select);
-        element.requestFullscreen();
-        return "FULLSCREEN";
+      let is_fullscreen = await external_function_parent('is_fullscreen')()
+      if (is_fullscreen) {
+          await go_out_of_fullscreen()
+          return
       }
-      if (mode === "windowed") {
-        await go_into_fullscreen();
-        return "WINDOWED";
+
+      // Find possible picture-in-picture video element
+      let element = document.querySelector(`[data-${fullscreen_select}]`)
+      let video_element = /** @type {PictureInPictureVideoElement} */ (element.querySelector('video'))
+      video_element =
+          video_element != null &&
+          video_element.requestPictureInPicture != null &&
+          video_element.readyState >= 1 &&
+          !video_element.disablePictureInPicture
+              ? video_element
+              : null
+
+      let { mode, pip } = await get_host_config_local()
+      if (pip === true && video_element != null) {
+          video_element.requestPictureInPicture()
+          onEscapePress(() => {
+              // @ts-ignore
+              document.exitPictureInPicture()
+          })
+          return 'PICTURE-IN-PICTURE'
       }
-      if (mode === "in-window") {
-        await go_in_window();
-        return "IN-WINDOW";
+
+      if (mode === 'fullscreen' || mode === 'windowed' || mode === 'in-window') {
+          if (mode === 'fullscreen') {
+              let element = document.querySelector(`[data-${fullscreen_select}]`)
+              disable_selector(element, fullscreen_select)
+              element.requestFullscreen()
+              return 'FULLSCREEN'
+          }
+          if (mode === 'windowed') {
+              await go_into_fullscreen()
+              return 'WINDOWED'
+          }
+          if (mode === 'in-window') {
+              await go_in_window()
+              return 'IN-WINDOW'
+          }
       }
-    }
 
-    let popup_div = document.createElement("div");
-    let shadowRoot = popup_div.attachShadow({ mode: "open" });
-    shadowRoot.appendChild(
-      createElementFromHTML(`<style>${popup_css}</style>`),
-    );
+      let popup_div = document.createElement('div')
+      let shadowRoot = popup_div.attachShadow({ mode: 'open' })
+      shadowRoot.appendChild(createElementFromHTML(`<style>${popup_css}</style>`))
 
-    let clicked_element_still_exists =
-      last_click_y != null && last_click_x != null; // && document.elementsFromPoint(last_click_x, last_click_y).includes(last_click_element)
-    if (
-      clicked_element_still_exists &&
-      Date.now() - last_click_timestamp <
-        CLICK_IS_CONSIDERED_FULLSCREEN_CLICK_DELAY
-    ) {
-      let top_vs_bottom =
-        last_click_y < window.innerHeight / 2
-          ? "translateY(0px)"
-          : "translateY(-100%)";
-      let left_vs_right =
-        last_click_x < window.innerWidth / 2
-          ? "translateX(0px)"
-          : "translateX(-100%)";
+      let clicked_element_still_exists = last_click_y != null && last_click_x != null // && document.elementsFromPoint(last_click_x, last_click_y).includes(last_click_element)
+      if (
+          clicked_element_still_exists &&
+          Date.now() - last_click_timestamp < CLICK_IS_CONSIDERED_FULLSCREEN_CLICK_DELAY
+      ) {
+          let top_vs_bottom = last_click_y < window.innerHeight / 2 ? 'translateY(0px)' : 'translateY(-100%)'
+          let left_vs_right = last_click_x < window.innerWidth / 2 ? 'translateX(0px)' : 'translateX(-100%)'
 
-      let popup = createElementFromHTML(`
+          let popup = createElementFromHTML(`
         <div class="popup" tabIndex="1" style="
           position: absolute;
           top: ${last_click_y}px;
@@ -326,42 +308,38 @@ const code_to_insert_in_page = on_webpage`{
           transform: ${top_vs_bottom} ${left_vs_right};
         ">
           ${
-            video_element
-              ? Button({
-                  icon: browser.runtime.getURL("Images/Icon_PiP@scalable.svg"),
-                  text: "PiP",
-                  title: "Picture-in-picture (p)",
-                  target: "picture-in-picture",
-                })
-              : ""
+              video_element
+                  ? Button({
+                        icon: browser.runtime.getURL('Images/Icon_PiP@scalable.svg'),
+                        text: 'PiP',
+                        title: 'Picture-in-picture (p)',
+                        target: 'picture-in-picture',
+                    })
+                  : ''
           }
           ${Button({
-            icon: browser.runtime.getURL("Images/Icon_Windowed@scalable.svg"),
-            text: "Windowed",
-            title: "Windowed (w)",
-            target: "windowed",
+              icon: browser.runtime.getURL('Images/Icon_Windowed@scalable.svg'),
+              text: 'Windowed',
+              title: 'Windowed (w)',
+              target: 'windowed',
           })}
           ${Button({
-            icon: browser.runtime.getURL(
-              "Images/Icon_InWindow_Mono@scalable.svg",
-            ),
-            text: "In-window",
-            title: "In-window (i)",
-            target: "in-window",
+              icon: browser.runtime.getURL('Images/Icon_InWindow_Mono@scalable.svg'),
+              text: 'In-window',
+              title: 'In-window (i)',
+              target: 'in-window',
           })}
           ${Button({
-            icon: browser.runtime.getURL(
-              "Images/Icon_EnterFullscreen@scalable.svg",
-            ),
-            text: "Fullscreen",
-            title: "Fullscreen (f)",
-            target: "fullscreen",
+              icon: browser.runtime.getURL('Images/Icon_EnterFullscreen@scalable.svg'),
+              text: 'Fullscreen',
+              title: 'Fullscreen (f)',
+              target: 'fullscreen',
           })}
         </div>
-      `);
-      shadowRoot.appendChild(popup);
-    } else {
-      let popup = createElementFromHTML(`
+      `)
+          shadowRoot.appendChild(popup)
+      } else {
+          let popup = createElementFromHTML(`
         <div>
           <div
             style="
@@ -384,146 +362,137 @@ const code_to_insert_in_page = on_webpage`{
             <div style="padding: 1.25em; padding-bottom: 0.25em; padding-top: 0.25em">Enter fullscreen</div>
             <div style="height: 10px"></div>
             ${
-              video_element
-                ? Button({
-                    icon: browser.runtime.getURL(
-                      "Images/Icon_PiP@scalable.svg",
-                    ),
-                    text: "PiP",
-                    title: "Picture in picture (p)",
-                    target: "picture-in-picture",
-                  })
-                : ""
+                video_element
+                    ? Button({
+                          icon: browser.runtime.getURL('Images/Icon_PiP@scalable.svg'),
+                          text: 'PiP',
+                          title: 'Picture in picture (p)',
+                          target: 'picture-in-picture',
+                      })
+                    : ''
             }
             ${Button({
-              icon: browser.runtime.getURL("Images/Icon_Windowed@scalable.svg"),
-              text: "Windowed",
-              title: "Windowed (w)",
-              target: "windowed",
+                icon: browser.runtime.getURL('Images/Icon_Windowed@scalable.svg'),
+                text: 'Windowed',
+                title: 'Windowed (w)',
+                target: 'windowed',
             })}
             ${Button({
-              icon: browser.runtime.getURL(
-                "Images/Icon_InWindow_Mono@scalable.svg",
-              ),
-              text: "In-window",
-              title: "In-window (i)",
-              target: "in-window",
+                icon: browser.runtime.getURL('Images/Icon_InWindow_Mono@scalable.svg'),
+                text: 'In-window',
+                title: 'In-window (i)',
+                target: 'in-window',
             })}
             ${Button({
-              icon: browser.runtime.getURL(
-                "Images/Icon_EnterFullscreen@scalable.svg",
-              ),
-              text: "Fullscreen",
-              title: "Fullscreen (f)",
-              target: "fullscreen",
+                icon: browser.runtime.getURL('Images/Icon_EnterFullscreen@scalable.svg'),
+                text: 'Fullscreen',
+                title: 'Fullscreen (f)',
+                target: 'fullscreen',
             })}
           </div>
         </div>
-      `);
-      shadowRoot.appendChild(popup);
-    }
-
-    /** @type {HTMLElement} */
-    let popup_element = shadowRoot.querySelector(`.popup`);
-    setTimeout(() => {
-      popup_element.focus();
-    }, 0);
-
-    document.body.appendChild(popup_div);
-    last_popup = popup_div;
-
-    /** @type {"windowed" | "in-window" | "fullscreen" | "picture-in-picture" | "nothing"} */
-    let result = await new Promise((resolve) => {
-      popup_element.addEventListener("focusout", (event) => {
-        // @ts-ignore
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          resolve("nothing");
-        }
-      });
-
-      // For people who like keyboard shortcuts
-      popup_element.addEventListener(
-        "keydown",
-        (/** @type {KeyboardEvent} */ event) => {
-          if (event.key === "w") {
-            event.stopPropagation();
-            resolve("windowed");
-          }
-          if (event.key === "i") {
-            event.stopPropagation();
-            resolve("in-window");
-          }
-          if (event.key === "f") {
-            event.stopPropagation();
-
-            // I need this check here, because I can't call the original fullscreen from a
-            // 'async' function (or anywhere async (eg. after `resolve()` is called))
-            let element = document.querySelector(`[data-${fullscreen_select}]`);
-            disable_selector(element, fullscreen_select);
-            element.requestFullscreen();
-
-            resolve("fullscreen");
-          }
-          if (event.key === "p") {
-            event.stopPropagation();
-            resolve("picture-in-picture");
-          }
-          if (event.key === "Escape") {
-            event.stopPropagation();
-            resolve("nothing");
-          }
-        },
-      );
-
-      for (let button of shadowRoot.querySelectorAll(`[data-target]`)) {
-        button.addEventListener("click", (e) => {
-          // @ts-ignore
-          let target_keyword = button.dataset.target;
-          if (target_keyword === "fullscreen") {
-            // I need this check here, because I can't call the original fullscreen from a
-            // 'async' function (or anywhere async (eg. after `resolve()` is called))
-            let element = document.querySelector(`[data-${fullscreen_select}]`);
-            disable_selector(element, fullscreen_select);
-            element.requestFullscreen();
-          }
-          resolve(target_keyword);
-        });
+      `)
+          shadowRoot.appendChild(popup)
       }
-    });
 
-    clear_popup();
+      /** @type {HTMLElement} */
+      let popup_element = shadowRoot.querySelector(`.popup`)
+      setTimeout(() => {
+          popup_element.focus()
+      }, 0)
 
-    if (result === "fullscreen") {
-      // NOTE This is now all done sync in the popup callback.
-      // .... because firefox does not like it when I call it from a promise.
-      return "FULLSCREEN";
-    }
-    if (result === "windowed") {
-      await go_into_fullscreen();
-      return "WINDOWED";
-    }
-    if (result === "in-window") {
-      await go_in_window();
-      return "IN-WINDOW";
-    }
-    if (result === "picture-in-picture") {
-      video_element.requestPictureInPicture();
+      document.body.appendChild(popup_div)
+      last_popup = popup_div
 
-      onEscapePress(() => {
-        // @ts-ignore
-        document.exitPictureInPicture();
-      });
+      /** @type {"windowed" | "in-window" | "fullscreen" | "picture-in-picture" | "nothing"} */
+      let result = await new Promise((resolve) => {
+          popup_element.addEventListener('focusout', (event) => {
+              // @ts-ignore
+              if (!event.currentTarget.contains(event.relatedTarget)) {
+                  resolve('nothing')
+              }
+          })
 
-      return "PICTURE-IN-PICTURE";
-    }
-    if (result === "nothing") {
-      return "NOTHING";
-    }
+          // For people who like keyboard shortcuts
+          popup_element.addEventListener('keydown', (/** @type {KeyboardEvent} */ event) => {
+              if (event.key === 'w') {
+                  event.stopPropagation()
+                  resolve('windowed')
+              }
+              if (event.key === 'i') {
+                  event.stopPropagation()
+                  resolve('in-window')
+              }
+              if (event.key === 'f') {
+                  event.stopPropagation()
+
+                  // I need this check here, because I can't call the original fullscreen from a
+                  // 'async' function (or anywhere async (eg. after `resolve()` is called))
+                  let element = document.querySelector(`[data-${fullscreen_select}]`)
+                  disable_selector(element, fullscreen_select)
+                  element.requestFullscreen()
+
+                  resolve('fullscreen')
+              }
+              if (event.key === 'p') {
+                  event.stopPropagation()
+                  resolve('picture-in-picture')
+              }
+              if (event.key === 'Escape') {
+                  event.stopPropagation()
+                  resolve('nothing')
+              }
+          })
+
+          for (let button of shadowRoot.querySelectorAll(`[data-target]`)) {
+              button.addEventListener('click', (e) => {
+                  // @ts-ignore
+                  let target_keyword = button.dataset.target
+                  if (target_keyword === 'fullscreen') {
+                      // I need this check here, because I can't call the original fullscreen from a
+                      // 'async' function (or anywhere async (eg. after `resolve()` is called))
+                      let element = document.querySelector(`[data-${fullscreen_select}]`)
+                      disable_selector(element, fullscreen_select)
+                      element.requestFullscreen()
+                  }
+                  resolve(target_keyword)
+              })
+          }
+      })
+
+      clear_popup()
+
+      if (result === 'fullscreen') {
+          // NOTE This is now all done sync in the popup callback.
+          // .... because firefox does not like it when I call it from a promise.
+          return 'FULLSCREEN'
+      }
+      if (result === 'windowed') {
+          await go_into_fullscreen()
+          return 'WINDOWED'
+      }
+      if (result === 'in-window') {
+          await go_in_window()
+          return 'IN-WINDOW'
+      }
+      if (result === 'picture-in-picture') {
+          video_element.requestPictureInPicture()
+
+          onEscapePress(() => {
+              // @ts-ignore
+              document.exitPictureInPicture()
+          })
+
+          return 'PICTURE-IN-PICTURE'
+      }
+      if (result === 'nothing') {
+          return 'NOTHING'
+      }
   }}
 
   let make_tab_exit_fullscreen = ${async () => {
-    await go_out_of_fullscreen();
-    send_fullscreen_events();
+      await go_out_of_fullscreen()
+      send_fullscreen_events()
   }}
 
   let exitFullscreen = async function(original) {
@@ -550,7 +519,7 @@ const code_to_insert_in_page = on_webpage`{
     }
   }
 
-  ${"" /* NOTE requestFullscreen */}
+  ${'' /* NOTE requestFullscreen */}
   const requestFullscreen_windowed = async function(original, ...args) {
     const element = this;
     element.dataset['${fullscreen_select}'] = true;
@@ -634,9 +603,7 @@ const code_to_insert_in_page = on_webpage`{
     }
   }
 
-  ${
-    "" /* NOTE Replace all the `requestFullscreen` aliasses with calls to my own version */
-  }
+  ${'' /* NOTE Replace all the `requestFullscreen` aliasses with calls to my own version */}
   let original_requestFullscreen = null;
   requestFullscreen_aliasses.forEach(requestFullscreenAlias => {
     if (typeof Element.prototype[requestFullscreenAlias] === 'function') {
@@ -648,9 +615,7 @@ const code_to_insert_in_page = on_webpage`{
     }
   });
 
-  ${
-    "" /* NOTE Replace all the `exitFullscreen` aliasses with calls to my own version */
-  }
+  ${'' /* NOTE Replace all the `exitFullscreen` aliasses with calls to my own version */}
   let original_exitFullscreen = null;
   exitFullscreen_aliasses.forEach(exitFullscreenAlias => {
     if (typeof Document.prototype[exitFullscreenAlias] === 'function') {
@@ -661,7 +626,7 @@ const code_to_insert_in_page = on_webpage`{
       };
     }
   });
-}`;
+}`
 
 //// I used to insert the code directly as a <script>...</script> tag,
 //// but that doesn't work nicely with some sites CSP.
@@ -674,39 +639,39 @@ const code_to_insert_in_page = on_webpage`{
 // document.documentElement.appendChild(elt);
 // document.documentElement.removeChild(elt);
 
-let elt = document.createElement("script");
-elt.src = browser.runtime.getURL("script_to_insert_directly_into_page.js");
-document.documentElement.appendChild(elt);
-document.documentElement.removeChild(elt);
+let elt = document.createElement('script')
+elt.src = browser.runtime.getURL('script_to_insert_directly_into_page.js')
+document.documentElement.appendChild(elt)
+document.documentElement.removeChild(elt)
 
 //// This is just for myself as debugging, but it will tell me if the script that is inserted,
 //// is actually the same as the script I am expecting it to be. (because debugging could get very frustrating)
-let async = async (async) => async();
+let async = async (async) => async()
 async(async () => {
-  let response = await fetch(elt.src);
-  let result = await response.text();
-  if (result !== code_to_insert_in_page) {
-    // prettier-ignore
-    console.error("[WINDOWED] HEY MICHIEL! The script I am inserting is not the same as the script I expect it to be!");
-    console.log("[WINDOWED] Code should actually be:");
-    console.log(code_to_insert_in_page);
-  }
-});
+    let response = await fetch(elt.src)
+    let result = await response.text()
+    if (result !== code_to_insert_in_page) {
+        // prettier-ignore
+        console.error("[WINDOWED] HEY MICHIEL! The script I am inserting is not the same as the script I expect it to be!");
+        console.log('[WINDOWED] Code should actually be:')
+        console.log(code_to_insert_in_page)
+    }
+})
 
 const send_event = (element, type) => {
-  const event = new Event(type, {
-    bubbles: true,
-    cancelable: false,
-  });
-  element.dispatchEvent(event);
-};
+    const event = new Event(type, {
+        bubbles: true,
+        cancelable: false,
+    })
+    element.dispatchEvent(event)
+}
 
 const send_fullscreen_events = () => {
-  for (let fullscreenchange of fullscreenchange_aliasses) {
-    send_event(document, fullscreenchange);
-  }
-  send_event(window, "resize");
-};
+    for (let fullscreenchange of fullscreenchange_aliasses) {
+        send_event(document, fullscreenchange)
+    }
+    send_event(window, 'resize')
+}
 
 // setTimeout(() => {
 //   for (let stylesheet of document.styleSheets) {
@@ -740,13 +705,13 @@ const send_fullscreen_events = () => {
 // On Firefox however, this is not the case, and I might (because firefox screws me with CSP)
 // need to use this quirk to work on all pages
 
-let clear_listeners = () => {};
+let clear_listeners = () => {}
 
 let delay = (ms) => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(), ms);
-  });
-};
+    return new Promise((resolve) => {
+        setTimeout(() => resolve(), ms)
+    })
+}
 
 let popup_css = `
   .popup {
@@ -815,13 +780,13 @@ let popup_css = `
     width: 1.2em;
     margin-right: 1em;
   }
-`;
+`
 
-let has_style_created = false;
+let has_style_created = false
 let create_style_rule = () => {
-  has_style_created = true;
+    has_style_created = true
 
-  let css = `
+    let css = `
     [data-${body_class}] [data-${fullscreen_active}] {
       position: fixed !important;
       top: 0 !important;
@@ -862,303 +827,290 @@ let create_style_rule = () => {
     [data-${body_class}] #player-theater-container {
       min-height: 0 !important;
     }
-  `;
+  `
 
-  let styleEl = document.createElement("style");
-  document.head.appendChild(styleEl);
-  styleEl.appendChild(document.createTextNode(css));
-};
+    let styleEl = document.createElement('style')
+    document.head.appendChild(styleEl)
+    styleEl.appendChild(document.createTextNode(css))
+}
 
 const parent_elements = function* (element) {
-  let el = element.parentElement;
-  while (el) {
-    yield el;
-    el = el.parentElement;
-  }
-};
+    let el = element.parentElement
+    while (el) {
+        yield el
+        el = el.parentElement
+    }
+}
 
 /**
  * @param {{ type: string, [key: string]: any }} message
  */
 let send_chrome_message = async (message) => {
-  let { type, value } = await browser.runtime.sendMessage(message);
-  if (type === "resolve") {
-    return value;
-  } else {
-    let err = new Error(value.message);
-    err.stack = value.stack;
-    // err.stack = [
-    //   ...x.value.stack.split('\n'),
-    //   'From postMessage to background page',
-    //   ...stack,
-    // ].join('\n');
-    throw err;
-  }
-};
+    let { type, value } = await browser.runtime.sendMessage(message)
+    if (type === 'resolve') {
+        return value
+    } else {
+        let err = new Error(value.message)
+        err.stack = value.stack
+        // err.stack = [
+        //   ...x.value.stack.split('\n'),
+        //   'From postMessage to background page',
+        //   ...stack,
+        // ].join('\n');
+        throw err
+    }
+}
 
-let CLICK_IS_CONSIDERED_FULLSCREEN_CLICK_DELAY = 1 * 1000;
+let CLICK_IS_CONSIDERED_FULLSCREEN_CLICK_DELAY = 1 * 1000
 
-let last_click_x = null;
-let last_click_y = null;
-let last_click_timestamp = 0;
-let last_click_element = null;
+let last_click_x = null
+let last_click_y = null
+let last_click_timestamp = 0
+let last_click_element = null
 
-let last_popup = null;
-let is_in_fullscreen = false;
+let last_popup = null
+let is_in_fullscreen = false
 
 let clear_popup = () => {
-  if (last_popup != null) {
-    try {
-      document.body.removeChild(last_popup);
-    } catch (err) {}
-    last_popup = null;
-    return true;
-  }
-  return false;
-};
-
-document.addEventListener("click", (event) => {
-  last_click_x = event.pageX;
-  last_click_y = event.pageY;
-  last_click_timestamp = Date.now();
-  // last_click_element = event.target;
-
-  if (
-    last_popup != null &&
-    (event.target === last_popup || last_popup.contains(event.target))
-  ) {
-    // Clicked inside popup
-  } else {
-    if (clear_popup()) {
-      send_fullscreen_events();
+    if (last_popup != null) {
+        try {
+            document.body.removeChild(last_popup)
+        } catch (err) {}
+        last_popup = null
+        return true
     }
-  }
-});
+    return false
+}
+
+document.addEventListener('click', (event) => {
+    last_click_x = event.pageX
+    last_click_y = event.pageY
+    last_click_timestamp = Date.now()
+    // last_click_element = event.target;
+
+    if (last_popup != null && (event.target === last_popup || last_popup.contains(event.target))) {
+        // Clicked inside popup
+    } else {
+        if (clear_popup()) {
+            send_fullscreen_events()
+        }
+    }
+})
 
 let exit_fullscreen_on_page = () => {
-  window.postMessage(
-    {
-      type: "WINDOWED-exit-fullscreen",
-    },
-    "*",
-  );
-};
+    window.postMessage(
+        {
+            type: 'WINDOWED-exit-fullscreen',
+        },
+        '*',
+    )
+}
 
 let createElementFromHTML = (htmlString) => {
-  let div = document.createElement("div");
-  div.innerHTML = htmlString.trim();
+    let div = document.createElement('div')
+    div.innerHTML = htmlString.trim()
 
-  return div.firstChild;
-};
+    return div.firstChild
+}
 
 let go_in_window = async () => {
-  create_style_rule();
-  clear_listeners();
-  let element = document.querySelector(`[data-${fullscreen_select}]`);
+    create_style_rule()
+    clear_listeners()
+    let element = document.querySelector(`[data-${fullscreen_select}]`)
 
-  let unlisten_to_escape = onEscapePress(() => {
-    exit_fullscreen_on_page();
-  });
+    let unlisten_to_escape = onEscapePress(() => {
+        exit_fullscreen_on_page()
+    })
 
-  let beforeunload_listener = (e) => {
-    exit_fullscreen_on_page();
-  };
-  window.addEventListener("beforeunload", beforeunload_listener);
+    let beforeunload_listener = (e) => {
+        exit_fullscreen_on_page()
+    }
+    window.addEventListener('beforeunload', beforeunload_listener)
 
-  clear_listeners = () => {
-    unlisten_to_escape();
-    window.removeEventListener("beforeunload", beforeunload_listener);
-  };
+    clear_listeners = () => {
+        unlisten_to_escape()
+        window.removeEventListener('beforeunload', beforeunload_listener)
+    }
 
-  enable_selector(element, fullscreen_active);
-  // Add fullscreen class to every parent of our fullscreen element
-  for (let parent_element of parent_elements(element)) {
-    enable_selector(parent_element, fullscreen_parent);
-  }
+    enable_selector(element, fullscreen_active)
+    // Add fullscreen class to every parent of our fullscreen element
+    for (let parent_element of parent_elements(element)) {
+        enable_selector(parent_element, fullscreen_parent)
+    }
 
-  if (window.parent !== window) {
-    // Ask parent-windowed code to become fullscreen too
-    window.parent.postMessage({ type: "enter_inwindow_iframe" }, "*");
-  }
+    if (window.parent !== window) {
+        // Ask parent-windowed code to become fullscreen too
+        window.parent.postMessage({ type: 'enter_inwindow_iframe' }, '*')
+    }
 
-  // Post back to in-page javascript
-  window.postMessage({ type: "WINDOWED-confirm-fullscreen" }, "*");
+    // Post back to in-page javascript
+    window.postMessage({ type: 'WINDOWED-confirm-fullscreen' }, '*')
 
-  // Add no scroll to the body and let everything kick in
-  enable_selector(document.body, body_class);
-};
+    // Add no scroll to the body and let everything kick in
+    enable_selector(document.body, body_class)
+}
 
 let go_into_fullscreen = async () => {
-  create_style_rule();
-  let element = document.querySelector(`[data-${fullscreen_select}]`);
-  let cloned = element.cloneNode(true);
+    create_style_rule()
+    let element = document.querySelector(`[data-${fullscreen_select}]`)
+    let cloned = element.cloneNode(true)
 
-  clear_listeners();
-  var mutationObserver = new MutationObserver(async (mutations) => {
-    for (let mutation of mutations) {
-      for (let removed of mutation.removedNodes) {
-        if (removed === element) {
-          clear_listeners();
+    clear_listeners()
+    var mutationObserver = new MutationObserver(async (mutations) => {
+        for (let mutation of mutations) {
+            for (let removed of mutation.removedNodes) {
+                if (removed === element) {
+                    clear_listeners()
 
-          enable_selector(cloned, fullscreen_element_cloned);
-          enable_selector(cloned, fullscreen_select);
-          document.body.appendChild(cloned);
-          go_into_fullscreen();
+                    enable_selector(cloned, fullscreen_element_cloned)
+                    enable_selector(cloned, fullscreen_select)
+                    document.body.appendChild(cloned)
+                    go_into_fullscreen()
 
-          await delay(500);
-          if (
-            (cloned instanceof HTMLIFrameElement ||
-              cloned instanceof HTMLObjectElement) &&
-            cloned.contentWindow?.postMessage
-          ) {
-            cloned.contentWindow.postMessage(
-              { type: "WINDOWED-confirm-fullscreen" },
-              "*",
-            );
-          }
+                    await delay(500)
+                    if (
+                        (cloned instanceof HTMLIFrameElement || cloned instanceof HTMLObjectElement) &&
+                        cloned.contentWindow?.postMessage
+                    ) {
+                        cloned.contentWindow.postMessage({ type: 'WINDOWED-confirm-fullscreen' }, '*')
+                    }
+                }
+            }
         }
-      }
+    })
+
+    if (element.parentElement) {
+        mutationObserver.observe(element.parentElement, {
+            childList: true,
+        })
     }
-  });
 
-  if (element.parentElement) {
-    mutationObserver.observe(element.parentElement, {
-      childList: true,
-    });
-  }
+    let unlisten_to_escape = onEscapePress(() => {
+        exit_fullscreen_on_page()
+    })
 
-  let unlisten_to_escape = onEscapePress(() => {
-    exit_fullscreen_on_page();
-  });
+    let beforeunload_listener = (e) => {
+        exit_fullscreen_on_page()
+    }
+    window.addEventListener('beforeunload', beforeunload_listener)
 
-  let beforeunload_listener = (e) => {
-    exit_fullscreen_on_page();
-  };
-  window.addEventListener("beforeunload", beforeunload_listener);
+    clear_listeners = () => {
+        mutationObserver.disconnect()
+        unlisten_to_escape()
+        window.removeEventListener('beforeunload', beforeunload_listener)
+    }
 
-  clear_listeners = () => {
-    mutationObserver.disconnect();
-    unlisten_to_escape();
-    window.removeEventListener("beforeunload", beforeunload_listener);
-  };
+    enable_selector(element, fullscreen_active)
+    // Add fullscreen class to every parent of our fullscreen element
+    for (let parent_element of parent_elements(element)) {
+        enable_selector(parent_element, fullscreen_parent)
+    }
 
-  enable_selector(element, fullscreen_active);
-  // Add fullscreen class to every parent of our fullscreen element
-  for (let parent_element of parent_elements(element)) {
-    enable_selector(parent_element, fullscreen_parent);
-  }
+    if (window.parent !== window) {
+        // Ask parent-windowed code to become fullscreen too
+        window.parent.postMessage({ type: 'enter_fullscreen_iframe' }, '*')
+    } else {
+        // Send popup command to extension
+        let menubar_size = window.outerHeight - window.innerHeight // Asume there is just header, no browser footer
 
-  if (window.parent !== window) {
-    // Ask parent-windowed code to become fullscreen too
-    window.parent.postMessage({ type: "enter_fullscreen_iframe" }, "*");
-  } else {
-    // Send popup command to extension
-    let menubar_size = window.outerHeight - window.innerHeight; // Asume there is just header, no browser footer
+        let rect = element.getBoundingClientRect()
+        let height = Math.max((rect.width * 9) / 16, rect.height)
+        let ratio_width = Math.min((height / 9) * 16, rect.width) // 16:9
+        let width_diff = rect.width - ratio_width
 
-    let rect = element.getBoundingClientRect();
-    let height = Math.max((rect.width * 9) / 16, rect.height);
-    let ratio_width = Math.min((height / 9) * 16, rect.width); // 16:9
-    let width_diff = rect.width - ratio_width;
+        await send_chrome_message({
+            type: 'please_make_me_a_popup',
+            position: {
+                height: height,
+                width: ratio_width,
+                top: rect.top + menubar_size,
+                left: rect.left + width_diff / 2,
+            },
+        })
+    }
 
-    await send_chrome_message({
-      type: "please_make_me_a_popup",
-      position: {
-        height: height,
-        width: ratio_width,
-        top: rect.top + menubar_size,
-        left: rect.left + width_diff / 2,
-      },
-    });
-  }
+    // Post back to the javascript we put inside the page
+    window.postMessage({ type: 'WINDOWED-confirm-fullscreen' }, '*')
 
-  // Post back to the javascript we put inside the page
-  window.postMessage({ type: "WINDOWED-confirm-fullscreen" }, "*");
-
-  // Add no scroll to the body and let everything kick in
-  enable_selector(document.body, body_class);
-  window.focus(); // idk
-};
+    // Add no scroll to the body and let everything kick in
+    enable_selector(document.body, body_class)
+    window.focus() // idk
+}
 
 let go_out_of_fullscreen = async () => {
-  // Remove no scroll from body (and remove all styles)
-  disable_selector(document.body, body_class);
+    // Remove no scroll from body (and remove all styles)
+    disable_selector(document.body, body_class)
 
-  // Remove fullscreen class... from everything
-  for (let element of document.querySelectorAll(
-    `[data-${fullscreen_parent}]`,
-  )) {
-    disable_selector(element, fullscreen_parent);
-  }
+    // Remove fullscreen class... from everything
+    for (let element of document.querySelectorAll(`[data-${fullscreen_parent}]`)) {
+        disable_selector(element, fullscreen_parent)
+    }
 
-  clear_listeners();
+    clear_listeners()
 
-  send_fullscreen_events();
+    send_fullscreen_events()
 
-  const fullscreen_element = document.querySelector(
-    `[data-${fullscreen_select}]`,
-  );
-  disable_selector(fullscreen_element, fullscreen_select);
-  disable_selector(fullscreen_element, fullscreen_active);
+    const fullscreen_element = document.querySelector(`[data-${fullscreen_select}]`)
+    disable_selector(fullscreen_element, fullscreen_select)
+    disable_selector(fullscreen_element, fullscreen_active)
 
-  // If we are a frame, tell the parent frame to exit fullscreen
-  // If we aren't (we are a popup), tell the background page to make me tab again
-  if (window.parent !== window) {
-    window.parent.postMessage({ type: "exit_fullscreen_iframe" }, "*");
-  } else {
-    await delay(10);
-    await send_chrome_message({ type: "please_make_me_a_tab_again" });
-    await delay(500);
-  }
+    // If we are a frame, tell the parent frame to exit fullscreen
+    // If we aren't (we are a popup), tell the background page to make me tab again
+    if (window.parent !== window) {
+        window.parent.postMessage({ type: 'exit_fullscreen_iframe' }, '*')
+    } else {
+        await delay(10)
+        await send_chrome_message({ type: 'please_make_me_a_tab_again' })
+        await delay(500)
+    }
 
-  let cloned = document.querySelector(`[data-${fullscreen_element_cloned}]`);
-  if (cloned) {
-    document.body.removeChild(cloned);
-  }
-};
+    let cloned = document.querySelector(`[data-${fullscreen_element_cloned}]`)
+    if (cloned) {
+        document.body.removeChild(cloned)
+    }
+}
 
 external_functions.is_fullscreen = () => {
-  const fullscreen_element = document.querySelector(
-    `[data-${fullscreen_active}]`,
-  );
-  return fullscreen_element != null;
-};
+    const fullscreen_element = document.querySelector(`[data-${fullscreen_active}]`)
+    return fullscreen_element != null
+}
 
-window.addEventListener("message", async (event) => {
-  // We only accept messages from ourselves
-  if (event.data == null) return;
-  if (event.data.type === "CUSTOM_WINDOWED_FROM_PAGE") {
-    let fn = external_functions[event.data.function_id];
-    try {
-      let result = await fn(...event.data.args);
-      // @ts-ignore
-      event.source.postMessage(
-        {
-          type: "CUSTOM_WINDOWED_TO_PAGE",
-          request_id: event.data.request_id,
-          resultType: "resolve",
-          result: result,
-        },
-        "*",
-      );
-    } catch (err) {
-      // @ts-ignore
-      event.source.postMessage(
-        {
-          type: "CUSTOM_WINDOWED_TO_PAGE",
-          request_id: event.data.request_id,
-          resultType: "reject",
-          result: {
-            message: err.message,
-            stack: err.stack,
-          },
-        },
-        "*",
-      );
+window.addEventListener('message', async (event) => {
+    // We only accept messages from ourselves
+    if (event.data == null) return
+    if (event.data.type === 'CUSTOM_WINDOWED_FROM_PAGE') {
+        let fn = external_functions[event.data.function_id]
+        try {
+            let result = await fn(...event.data.args)
+            // @ts-ignore
+            event.source.postMessage(
+                {
+                    type: 'CUSTOM_WINDOWED_TO_PAGE',
+                    request_id: event.data.request_id,
+                    resultType: 'resolve',
+                    result: result,
+                },
+                '*',
+            )
+        } catch (err) {
+            // @ts-ignore
+            event.source.postMessage(
+                {
+                    type: 'CUSTOM_WINDOWED_TO_PAGE',
+                    request_id: event.data.request_id,
+                    resultType: 'reject',
+                    result: {
+                        message: err.message,
+                        stack: err.stack,
+                    },
+                },
+                '*',
+            )
+        }
     }
-  }
-});
+})
 
-let is_escape_locked = false;
+let is_escape_locked = false
 // TODO Ask feedback from the Stadia community to find out what an helpful solution would be
 // https://www.reddit.com/r/Stadia/comments/kibh2r/windowed_stadia_extension_what_could_i_improve/
 // WELL one response isn't too bad, is it?
@@ -1220,53 +1172,53 @@ let is_escape_locked = false;
 // document.documentElement.removeChild(keyboard_lock_script_element);
 
 let onEscapePress = (fn) => {
-  let escape_timeout = null;
-  let escape_listener = (e) => {
-    if (!e.defaultPrevented && e.key === "Escape") {
-      if (is_escape_locked) {
-        escape_timeout = setTimeout(() => {
-          fn();
-        }, 1.2 * 1000);
-      } else {
-        fn();
-      }
+    let escape_timeout = null
+    let escape_listener = (e) => {
+        if (!e.defaultPrevented && e.key === 'Escape') {
+            if (is_escape_locked) {
+                escape_timeout = setTimeout(() => {
+                    fn()
+                }, 1.2 * 1000)
+            } else {
+                fn()
+            }
+        }
     }
-  };
 
-  let escape_up_listener = (e) => {
-    if (!e.defaultPrevented && e.key === "Escape") {
-      clearTimeout(escape_timeout);
+    let escape_up_listener = (e) => {
+        if (!e.defaultPrevented && e.key === 'Escape') {
+            clearTimeout(escape_timeout)
+        }
     }
-  };
 
-  window.addEventListener("keydown", escape_listener);
-  window.addEventListener("keyup", escape_up_listener);
+    window.addEventListener('keydown', escape_listener)
+    window.addEventListener('keyup', escape_up_listener)
 
-  return () => {
-    window.removeEventListener("keydown", escape_listener);
-    window.removeEventListener("keyup", escape_up_listener);
-  };
-};
+    return () => {
+        window.removeEventListener('keydown', escape_listener)
+        window.removeEventListener('keyup', escape_up_listener)
+    }
+}
 
 let check_disabled_state = async () => {
-  try {
-    let { mode, pip } = await get_host_config_local();
-    window.postMessage(
-      {
-        type: "WINDOWED-notify",
-        disabled: mode === "fullscreen" && pip === false,
-      },
-      "*",
-    );
-  } catch (err) {
-    // prettier-ignore
-    console.warn(`[Windowed] Error while checking if windowed is enabled or not`, err)
-  }
-};
+    try {
+        let { mode, pip } = await get_host_config_local()
+        window.postMessage(
+            {
+                type: 'WINDOWED-notify',
+                disabled: mode === 'fullscreen' && pip === false,
+            },
+            '*',
+        )
+    } catch (err) {
+        // prettier-ignore
+        console.warn(`[Windowed] Error while checking if windowed is enabled or not`, err)
+    }
+}
 
-check_disabled_state();
+check_disabled_state()
 
 browser.runtime.onConnect.addListener(async (port) => {
-  port.postMessage({ type: "I_exists_ping" });
-  check_disabled_state();
-});
+    port.postMessage({ type: 'I_exists_ping' })
+    check_disabled_state()
+})
