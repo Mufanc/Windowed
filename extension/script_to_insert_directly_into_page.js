@@ -261,8 +261,10 @@
         event.preventDefault()
         if (isFullScreen()) {
             document.exitFullscreen()
+            document.documentElement.style.overflow = ''
         } else {
             document.documentElement.requestFullscreen()
+            document.documentElement.style.overflow = 'scroll'
         }
     })
 }
