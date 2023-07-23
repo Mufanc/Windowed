@@ -644,20 +644,6 @@ elt.src = browser.runtime.getURL('script_to_insert_directly_into_page.js')
 document.documentElement.appendChild(elt)
 document.documentElement.removeChild(elt)
 
-//// This is just for myself as debugging, but it will tell me if the script that is inserted,
-//// is actually the same as the script I am expecting it to be. (because debugging could get very frustrating)
-let async = async (async) => async()
-async(async () => {
-    let response = await fetch(elt.src)
-    let result = await response.text()
-    if (result !== code_to_insert_in_page) {
-        // prettier-ignore
-        console.error("[WINDOWED] HEY MICHIEL! The script I am inserting is not the same as the script I expect it to be!");
-        console.log('[WINDOWED] Code should actually be:')
-        console.log(code_to_insert_in_page)
-    }
-})
-
 const send_event = (element, type) => {
     const event = new Event(type, {
         bubbles: true,
@@ -1012,11 +998,19 @@ let go_into_fullscreen = async () => {
     } else {
         // Send popup command to extension
         let menubar_size = window.outerHeight - window.innerHeight // Asume there is just header, no browser footer
+        let rect, height, ratio_width, width_diff;
 
-        let rect = element.getBoundingClientRect()
-        let height = Math.max((rect.width * 9) / 16, rect.height)
-        let ratio_width = Math.min((height / 9) * 16, rect.width) // 16:9
-        let width_diff = rect.width - ratio_width
+        if (element === document.documentElement) {
+            rect = { top: 0, left: 0 }
+            height = window.innerHeight
+            ratio_width = window.innerWidth
+            width_diff = 0
+        } else {
+            rect = element.getBoundingClientRect()
+            height = Math.max((rect.width * 9) / 16, rect.height)
+            ratio_width = Math.min((height / 9) * 16, rect.width) // 16:9
+            width_diff = rect.width - ratio_width
+        }
 
         await send_chrome_message({
             type: 'please_make_me_a_popup',

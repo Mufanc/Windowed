@@ -251,4 +251,18 @@
             }
         }
     })
+
+    function isFullScreen() {
+        return !!document.fullscreenElement;
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'F11') return
+        event.preventDefault()
+        if (isFullScreen()) {
+            document.exitFullscreen()
+        } else {
+            document.documentElement.requestFullscreen()
+        }
+    })
 }
